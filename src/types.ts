@@ -10,7 +10,9 @@ export type NodeRect = {
 
 export type EditorState = {
   doc: {
-    nodes: NodeRect[];
+    // nodes: NodeRect[];
+    nodeIds: string[];
+    nodeById: Record<string, NodeRect>;
   };
   ui: {
     selectedIds: string[];

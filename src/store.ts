@@ -7,7 +7,17 @@ const DEFAULT_COUNT = 7000;
 function createInitialState(nodeCount: number): EditorState {
   const nodes = createNodes(nodeCount);
   return {
-    doc: { nodes },
+    doc: {
+      // nodes
+      nodeIds: nodes.map((n) => n.id),
+      nodeById: nodes.reduce(
+        (acc, n) => {
+          acc[n.id] = n;
+          return acc;
+        },
+        {} as Record<string, NodeRect>,
+      ),
+    },
     ui: {
       selectedIds: [nodes[0]?.id ?? "node_0"],
       isDragging: false,
@@ -72,7 +82,8 @@ export const useEditorStore = create<EditorStore>((set) => ({
       const nextSelectedIds = shift ? Array.from(new Set([...s.ui.selectedIds, id])) : [id];
       const snapshot: Record<string, { x: number; y: number }> = {};
       for (const sid of nextSelectedIds) {
-        const n = s.doc.nodes.find((node) => node.id === sid);
+        // const n = s.doc.nodes.find((node) => node.id === sid);
+        const n = s.doc.nodeById[sid];
         if (n) snapshot[sid] = { x: n.x, y: n.y };
       }
       return {
@@ -90,23 +101,38 @@ export const useEditorStore = create<EditorStore>((set) => ({
 
   moveDragBy: (dx, dy) =>
     set((s) => {
-      // let checksum = 0;
-      // for (let i = 0; i < s.doc.nodes.length; i += 1) {
-      //   checksum =
-      //     (checksum +
-      //       ((s.doc.nodes[i].x * 31 + s.doc.nodes[i].y * 17) | 0)) |
-      //     0;
-      // }
+      // const selectedIdsSet = new Set(s.ui.selectedIds);
 
-      const selectedIdsSet = new Set(s.ui.selectedIds);
-      const nextNodes = s.doc.nodes.map((n) => {
-        if (!selectedIdsSet.has(n.id)) return n;
-        const start = s.ui.dragStartSnapshotById[n.id];
-        if (!start) return n;
-        return { ...n, x: start.x + dx, y: start.y + dy };
+      // const nextNodes = s.doc.nodes.map((n) => {
+      //   if (!selectedIdsSet.has(n.id)) return n;
+      //   const start = s.ui.dragStartSnapshotById[n.id];
+      //   if (!start) return n;
+      //   return { ...n, x: start.x + dx, y: start.y + dy };
+      // });
+
+      const asdf = s.ui.selectedIds.map((id) => {
+        const start = s.ui.dragStartSnapshotById[id];
+        if (!start) return s.doc.nodeById[id];
+        return { ...s.doc.nodeById[id], x: start.x + dx, y: start.y + dy };
       });
+
+      const nextNodeById = asdf.reduce(
+        (acc, n) => {
+          acc[n.id] = n;
+          return acc;
+        },
+        {} as Record<string, NodeRect>,
+      );
+
       return {
-        doc: { ...s.doc, nodes: nextNodes },
+        doc: {
+          ...s.doc,
+          // nodes: nextNodes
+          nodeById: {
+            ...s.doc.nodeById,
+            ...nextNodeById,
+          },
+        },
         ui: {
           ...s.ui,
           debugTick: s.ui.debugTick + 1,
@@ -134,7 +160,11 @@ export const useEditorStore = create<EditorStore>((set) => ({
       return {
         doc: {
           ...s.doc,
-          nodes: s.doc.nodes.map((n) => (n.id === id ? { ...n, ...patch } : n)),
+          // nodes: s.doc.nodes.map((n) => (n.id === id ? { ...n, ...patch } : n)),
+          nodeById: {
+            ...s.doc.nodeById,
+            [id]: { ...s.doc.nodeById[id], ...patch },
+          },
         },
       };
     }),

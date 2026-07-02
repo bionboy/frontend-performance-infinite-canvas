@@ -16,7 +16,7 @@ export function Canvas() {
   const isRenderLoggingEnabled = useEditorStore((state) => state.ui.isRenderLoggingEnabled);
   const isDragging = useEditorStore((state) => state.ui.isDragging);
   const dragStartPointer = useEditorStore((state) => state.ui.dragStartPointer);
-  const nodes = useEditorStore((state) => state.doc.nodes);
+  const nodeIds = useEditorStore((state) => state.doc.nodeIds);
   const selectedIds = useEditorStore((state) => state.ui.selectedIds);
   const clearSelection = useEditorStore((state) => state.clearSelection);
   const moveDragBy = useEditorStore((state) => state.moveDragBy);
@@ -83,11 +83,11 @@ export function Canvas() {
         onPointerLeave={handlePointerUp}
       >
         <div className="canvas-page">
-          {nodes.map((node) => (
+          {nodeIds.map((id) => (
             <Shape
-              key={node.id}
-              node={node}
-              isSelected={isNodeSelected(node.id)}
+              key={id}
+              nodeId={id}
+              isSelected={isNodeSelected(id)}
               isRenderLoggingEnabled={isRenderLoggingEnabled}
               onPointerDown={handleSelectAndStartDrag}
             />

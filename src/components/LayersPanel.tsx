@@ -5,7 +5,7 @@ import { useRenderCount } from "../useRenderCount";
 export function LayersPanel() {
   const isRenderLoggingEnabled = useEditorStore((state) => state.ui.isRenderLoggingEnabled);
   const layerQuery = useEditorStore((state) => state.ui.layerQuery);
-  const nodesLength = useEditorStore((state) => state.doc.nodes.length);
+  const nodesLength = useEditorStore((state) => state.doc.nodeIds.length);
   const selectedIds = useEditorStore((state) => state.ui.selectedIds);
   const selectOnly = useEditorStore((state) => state.selectOnly);
   const setLayerQuery = useEditorStore((state) => state.setLayerQuery);
@@ -16,7 +16,9 @@ export function LayersPanel() {
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   const rows = useMemo(() => {
-    const nodes = useEditorStore.getState().doc.nodes;
+    const nodes = useEditorStore
+      .getState()
+      .doc.nodeIds.map((id) => useEditorStore.getState().doc.nodeById[id]);
     return nodes
       .filter((n) => n.name.toLowerCase().includes(query))
       .map((n) => ({

@@ -3,11 +3,6 @@ import { useEditorStore } from "../store";
 import { useRenderCount } from "../useRenderCount";
 import { useCallback, useEffect, useMemo } from "react";
 
-function getNodeById(nodes: NodeRect[], id: string | null): NodeRect | null {
-  if (!id) return null;
-  return nodes.find((n) => n.id === id) ?? null;
-}
-
 export function PropertiesPanel() {
   const isRenderLoggingEnabled = useEditorStore((state) => state.ui.isRenderLoggingEnabled);
   const isDragging = useEditorStore((state) => state.ui.isDragging);
@@ -15,7 +10,7 @@ export function PropertiesPanel() {
   const patchSelected = useEditorStore((state) => state.patchSelected);
 
   const node = useMemo(
-    () => getNodeById(useEditorStore.getState().doc.nodes, selectedId),
+    () => useEditorStore.getState().doc.nodeById[selectedId],
     [selectedId, isDragging],
   );
 
