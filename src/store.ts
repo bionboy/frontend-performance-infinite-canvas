@@ -101,28 +101,20 @@ export const useEditorStore = create<EditorStore>((set) => ({
 
   moveDragBy: (dx, dy) =>
     set((s) => {
-      // const selectedIdsSet = new Set(s.ui.selectedIds);
+      const nextNodeById = { ...s.doc.nodeById };
 
-      // const nextNodes = s.doc.nodes.map((n) => {
-      //   if (!selectedIdsSet.has(n.id)) return n;
-      //   const start = s.ui.dragStartSnapshotById[n.id];
-      //   if (!start) return n;
-      //   return { ...n, x: start.x + dx, y: start.y + dy };
-      // });
-
-      const asdf = s.ui.selectedIds.map((id) => {
+      for (const id of s.ui.selectedIds) {
         const start = s.ui.dragStartSnapshotById[id];
-        if (!start) return s.doc.nodeById[id];
-        return { ...s.doc.nodeById[id], x: start.x + dx, y: start.y + dy };
-      });
+        const node = s.doc.nodeById[id];
 
-      const nextNodeById = asdf.reduce(
-        (acc, n) => {
-          acc[n.id] = n;
-          return acc;
-        },
-        {} as Record<string, NodeRect>,
-      );
+        if (!start || !node) continue;
+
+        nextNodeById[id] = {
+          ...node,
+          x: start.x + dx,
+          y: start.y + dy,
+        };
+      }
 
       return {
         doc: {
