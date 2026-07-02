@@ -1,19 +1,20 @@
 import type { NodeRect } from "../types";
 import { useRenderCount } from "../useRenderCount";
+import React from "react";
 
 export interface ShapeProps {
   node: NodeRect;
   isSelected: boolean;
   isRenderLoggingEnabled: boolean;
-  onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerDown: (e: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
 }
 
-export function Shape(props: ShapeProps) {
+export const Shape = React.memo(function Shape(props: ShapeProps) {
   useRenderCount(`Shape:${props.node.id}`, props.isRenderLoggingEnabled);
 
   return (
     <div
-      onPointerDown={props.onPointerDown}
+      onPointerDown={(e) => props.onPointerDown(e, props.node.id)}
       style={{
         position: "absolute",
         left: props.node.x,
@@ -29,4 +30,4 @@ export function Shape(props: ShapeProps) {
       title={props.node.id}
     />
   );
-}
+});

@@ -1,10 +1,14 @@
-import { useEditorStore } from './store';
-import { Canvas } from './components/Canvas';
-import { LayersPanel } from './components/LayersPanel';
-import { PropertiesPanel } from './components/PropertiesPanel';
+import { useEditorStore } from "./store";
+import { Canvas } from "./components/Canvas";
+import { LayersPanel } from "./components/LayersPanel";
+import { PropertiesPanel } from "./components/PropertiesPanel";
 
 export function App() {
-  const store = useEditorStore();
+  const nodeCount = useEditorStore((state) => state.nodeCount);
+  const setNodeCount = useEditorStore((state) => state.setNodeCount);
+  const reset = useEditorStore((state) => state.reset);
+  const isRenderLoggingEnabled = useEditorStore((state) => state.ui.isRenderLoggingEnabled);
+  const toggleRenderLogging = useEditorStore((state) => state.toggleRenderLogging);
 
   return (
     <div className="layout">
@@ -15,24 +19,21 @@ export function App() {
           <span>Nodes</span>
           <input
             type="number"
-            value={store.nodeCount}
-            onChange={(e) => store.setNodeCount(Number(e.target.value))}
+            value={nodeCount}
+            onChange={(e) => setNodeCount(Number(e.target.value))}
             className="topbar__nodes-input"
           />
         </label>
 
-        <button
-          onClick={() => store.reset(store.nodeCount)}
-          className="topbar__button"
-        >
+        <button onClick={() => reset(nodeCount)} className="topbar__button">
           Reset document
         </button>
 
         <label className="topbar__field">
           <input
             type="checkbox"
-            checked={store.ui.isRenderLoggingEnabled}
-            onChange={(e) => store.toggleRenderLogging(e.target.checked)}
+            checked={isRenderLoggingEnabled}
+            onChange={(e) => toggleRenderLogging(e.target.checked)}
           />
           <span>Render logging</span>
         </label>
@@ -42,9 +43,9 @@ export function App() {
       </header>
 
       <div className="shell">
-        {/* <LayersPanel /> */}
+        <LayersPanel />
         <Canvas />
-        {/* <PropertiesPanel /> */}
+        <PropertiesPanel />
       </div>
     </div>
   );

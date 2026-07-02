@@ -30,11 +30,7 @@ export type EditorStore = EditorState & {
   setLayerQuery: (q: string) => void;
   selectOnly: (id: string) => void;
   clearSelection: () => void;
-  selectAndStartDrag: (
-    id: string,
-    pointer: { x: number; y: number },
-    shift: boolean
-  ) => void;
+  selectAndStartDrag: (id: string, pointer: { x: number; y: number }, shift: boolean) => void;
   moveDragBy: (dx: number, dy: number) => void;
   endDrag: () => void;
   patchSelected: (patch: Partial<NodeRect>) => void;
@@ -52,14 +48,11 @@ export const useEditorStore = create<EditorStore>((set) => ({
       nodeCount: n,
     })),
 
-  toggleRenderLogging: (v) =>
-    set((s) => ({ ui: { ...s.ui, isRenderLoggingEnabled: v } })),
+  toggleRenderLogging: (v) => set((s) => ({ ui: { ...s.ui, isRenderLoggingEnabled: v } })),
 
-  setLayerQuery: (q) =>
-    set((s) => ({ ui: { ...s.ui, layerQuery: q } })),
+  setLayerQuery: (q) => set((s) => ({ ui: { ...s.ui, layerQuery: q } })),
 
-  selectOnly: (id) =>
-    set((s) => ({ ui: { ...s.ui, selectedIds: [id] } })),
+  selectOnly: (id) => set((s) => ({ ui: { ...s.ui, selectedIds: [id] } })),
 
   clearSelection: () =>
     set((s) => ({
@@ -76,9 +69,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
 
   selectAndStartDrag: (id, pointer, shift) =>
     set((s) => {
-      const nextSelectedIds = shift
-        ? Array.from(new Set([...s.ui.selectedIds, id]))
-        : [id];
+      const nextSelectedIds = shift ? Array.from(new Set([...s.ui.selectedIds, id])) : [id];
       const snapshot: Record<string, { x: number; y: number }> = {};
       for (const sid of nextSelectedIds) {
         const n = s.doc.nodes.find((node) => node.id === sid);
@@ -99,15 +90,17 @@ export const useEditorStore = create<EditorStore>((set) => ({
 
   moveDragBy: (dx, dy) =>
     set((s) => {
-      let checksum = 0;
-      for (let i = 0; i < s.doc.nodes.length; i += 1) {
-        checksum =
-          (checksum +
-            ((s.doc.nodes[i].x * 31 + s.doc.nodes[i].y * 17) | 0)) |
-          0;
-      }
+      // let checksum = 0;
+      // for (let i = 0; i < s.doc.nodes.length; i += 1) {
+      //   checksum =
+      //     (checksum +
+      //       ((s.doc.nodes[i].x * 31 + s.doc.nodes[i].y * 17) | 0)) |
+      //     0;
+      // }
+
+      const selectedIdsSet = new Set(s.ui.selectedIds);
       const nextNodes = s.doc.nodes.map((n) => {
-        if (!s.ui.selectedIds.includes(n.id)) return n;
+        if (!selectedIdsSet.has(n.id)) return n;
         const start = s.ui.dragStartSnapshotById[n.id];
         if (!start) return n;
         return { ...n, x: start.x + dx, y: start.y + dy };
@@ -117,7 +110,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
         ui: {
           ...s.ui,
           debugTick: s.ui.debugTick + 1,
-          debugChecksum: checksum,
+          // debugChecksum: checksum,
         },
       };
     }),
@@ -141,9 +134,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
       return {
         doc: {
           ...s.doc,
-          nodes: s.doc.nodes.map((n) =>
-            n.id === id ? { ...n, ...patch } : n
-          ),
+          nodes: s.doc.nodes.map((n) => (n.id === id ? { ...n, ...patch } : n)),
         },
       };
     }),
