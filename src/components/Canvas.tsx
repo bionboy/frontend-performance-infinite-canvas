@@ -3,11 +3,9 @@ import { useEditorStore } from "../store";
 import { useRenderCount } from "../useRenderCount";
 import { Shape } from "./Shape";
 import { MatrixOverlay } from "./MatrixOverlay";
+import { Coordinate } from "../types";
 
-function getPointerPositionWithin(
-  el: HTMLElement,
-  e: React.PointerEvent,
-): { x: number; y: number } {
+function getPointerPositionWithin(el: HTMLElement, e: React.PointerEvent): Coordinate {
   const rect = el.getBoundingClientRect();
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
@@ -28,6 +26,8 @@ export function Canvas() {
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
 
+  const dragDeltaRef = useRef<Coordinate>();
+
   function handlePointerDownOnCanvas(e: React.PointerEvent<HTMLDivElement>): void {
     if (e.target === e.currentTarget) {
       clearSelection();
@@ -41,9 +41,10 @@ export function Canvas() {
     if (!viewport) return;
 
     const pointer = getPointerPositionWithin(viewport, e);
-    const dx = pointer.x - dragStartPointer.x;
-    const dy = pointer.y - dragStartPointer.y;
-    moveDragBy(dx, dy);
+    const delta = { x: pointer.x - dragStartPointer.x, y: pointer.y - dragStartPointer.y };
+
+    dragDeltaRef.current = delta;
+    // moveDragBy(delta);
   }
 
   function handlePointerUp(): void {

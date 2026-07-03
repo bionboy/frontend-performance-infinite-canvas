@@ -1,3 +1,8 @@
+export type Coordinate = {
+  x: number;
+  y: number;
+};
+
 export type NodeRect = {
   id: string;
   name: string;
@@ -10,7 +15,6 @@ export type NodeRect = {
 
 export type EditorState = {
   doc: {
-    // nodes: NodeRect[];
     nodeIds: string[];
     nodeById: Record<string, NodeRect>;
   };
@@ -18,8 +22,8 @@ export type EditorState = {
     selectedIds: string[];
     isDragging: boolean;
     dragActiveId: string | null;
-    dragStartPointer: { x: number; y: number } | null;
-    dragStartSnapshotById: Record<string, { x: number; y: number }>;
+    dragStartPointer: Coordinate | null;
+    dragStartSnapshotById: Record<string, Coordinate>;
     layerQuery: string;
     isRenderLoggingEnabled: boolean;
     debugTick: number;

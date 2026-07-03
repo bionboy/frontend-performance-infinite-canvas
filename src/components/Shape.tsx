@@ -1,10 +1,8 @@
-import type { NodeRect } from "../types";
 import { useEditorStore } from "../store";
 import { useRenderCount } from "../useRenderCount";
 import React from "react";
 
 export interface ShapeProps {
-  // node: NodeRect;
   nodeId: string;
   isSelected: boolean;
   isRenderLoggingEnabled: boolean;
@@ -17,6 +15,7 @@ export const Shape = React.memo(function Shape(props: ShapeProps) {
 
   return (
     <div
+      data-node-id={props.nodeId}
       onPointerDown={(e) => props.onPointerDown(e, props.nodeId)}
       style={{
         position: "absolute",

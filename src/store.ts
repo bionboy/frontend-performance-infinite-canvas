@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { EditorState, NodeRect } from "./types";
+import type { Coordinate, EditorState, NodeRect } from "./types";
 import { clamp, createNodes } from "./utils";
 
 const DEFAULT_COUNT = 7000;
@@ -40,8 +40,8 @@ export type EditorStore = EditorState & {
   setLayerQuery: (q: string) => void;
   selectOnly: (id: string) => void;
   clearSelection: () => void;
-  selectAndStartDrag: (id: string, pointer: { x: number; y: number }, shift: boolean) => void;
-  moveDragBy: (dx: number, dy: number) => void;
+  selectAndStartDrag: (id: string, pointer: Coordinate, shift: boolean) => void;
+  moveDragBy: (delta: Coordinate) => void;
   endDrag: () => void;
   patchSelected: (patch: Partial<NodeRect>) => void;
 };
@@ -80,9 +80,8 @@ export const useEditorStore = create<EditorStore>((set) => ({
   selectAndStartDrag: (id, pointer, shift) =>
     set((s) => {
       const nextSelectedIds = shift ? Array.from(new Set([...s.ui.selectedIds, id])) : [id];
-      const snapshot: Record<string, { x: number; y: number }> = {};
+      const snapshot: Record<string, Coordinate> = {};
       for (const sid of nextSelectedIds) {
-        // const n = s.doc.nodes.find((node) => node.id === sid);
         const n = s.doc.nodeById[sid];
         if (n) snapshot[sid] = { x: n.x, y: n.y };
       }
@@ -99,7 +98,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
       };
     }),
 
-  moveDragBy: (dx, dy) =>
+  moveDragBy: (delta) =>
     set((s) => {
       const nextNodeById = { ...s.doc.nodeById };
 
@@ -111,15 +110,14 @@ export const useEditorStore = create<EditorStore>((set) => ({
 
         nextNodeById[id] = {
           ...node,
-          x: start.x + dx,
-          y: start.y + dy,
+          x: start.x + delta.x,
+          y: start.y + delta.y,
         };
       }
 
       return {
         doc: {
           ...s.doc,
-          // nodes: nextNodes
           nodeById: {
             ...s.doc.nodeById,
             ...nextNodeById,
