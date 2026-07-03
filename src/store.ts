@@ -118,10 +118,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
       return {
         doc: {
           ...s.doc,
-          nodeById: {
-            ...s.doc.nodeById,
-            ...nextNodeById,
-          },
+          nodeById: nextNodeById,
         },
         ui: {
           ...s.ui,
