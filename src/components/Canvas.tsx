@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useEditorStore } from "../store";
 import { useRenderCount } from "../useRenderCount";
 import { Shape } from "./Shape";
@@ -8,6 +8,71 @@ import { Coordinate } from "../types";
 function getPointerPositionWithin(el: HTMLElement, e: React.PointerEvent): Coordinate {
   const rect = el.getBoundingClientRect();
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function getNodeSelector(nodeId: string): string {
+  return `[data-node-id="${CSS.escape(nodeId)}"]`;
+}
+
+function useImperativeDragPreview() {
+  const selectedElementsRef = useRef<HTMLElement[]>([]);
+  const dragDeltaRef = useRef<Coordinate>();
+  const frameRef = useRef<number | null>(null);
+
+  const clearDragPreview = useCallback((): void => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+    }
+
+    for (const el of selectedElementsRef.current) {
+      el.style.transform = "";
+      el.style.willChange = "";
+    }
+
+    selectedElementsRef.current = [];
+    dragDeltaRef.current = undefined;
+  }, []);
+
+  const startDragPreview = useCallback(
+    (viewport: HTMLElement, nodeIds: string[]): void => {
+      clearDragPreview();
+      selectedElementsRef.current = nodeIds
+        .map((id) => viewport.querySelector<HTMLElement>(getNodeSelector(id)))
+        .filter((el): el is HTMLElement => el !== null);
+    },
+    [clearDragPreview],
+  );
+
+  const scheduleDragPreview = useCallback((delta: Coordinate): void => {
+    dragDeltaRef.current = delta;
+
+    if (frameRef.current !== null) return;
+
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null;
+      const latest = dragDeltaRef.current;
+      if (!latest) return;
+
+      for (const el of selectedElementsRef.current) {
+        el.style.transform = `translate(${latest.x}px, ${latest.y}px)`;
+        el.style.willChange = "transform";
+      }
+    });
+  }, []);
+
+  const getLatestDragDelta = useCallback((): Coordinate | undefined => {
+    return dragDeltaRef.current;
+  }, []);
+
+  useEffect(() => clearDragPreview, [clearDragPreview]);
+
+  return {
+    clearDragPreview,
+    getLatestDragDelta,
+    scheduleDragPreview,
+    startDragPreview,
+  };
 }
 
 export function Canvas() {
@@ -25,8 +90,9 @@ export function Canvas() {
   useRenderCount("Canvas", isRenderLoggingEnabled);
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
-
-  const dragDeltaRef = useRef<Coordinate>();
+  const dragStartClientRef = useRef<Coordinate | null>(null);
+  const { clearDragPreview, getLatestDragDelta, scheduleDragPreview, startDragPreview } =
+    useImperativeDragPreview();
 
   function handlePointerDownOnCanvas(e: React.PointerEvent<HTMLDivElement>): void {
     if (e.target === e.currentTarget) {
@@ -37,17 +103,24 @@ export function Canvas() {
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>): void {
     if (!isDragging) return;
     if (!dragStartPointer) return;
-    const viewport = viewportRef.current;
-    if (!viewport) return;
+    if (!dragStartClientRef.current) return;
 
-    const pointer = getPointerPositionWithin(viewport, e);
-    const delta = { x: pointer.x - dragStartPointer.x, y: pointer.y - dragStartPointer.y };
+    const delta = {
+      x: e.clientX - dragStartClientRef.current.x,
+      y: e.clientY - dragStartClientRef.current.y,
+    };
 
-    dragDeltaRef.current = delta;
-    // moveDragBy(delta);
+    scheduleDragPreview(delta);
   }
 
   function handlePointerUp(): void {
+    if (isDragging) {
+      const latest = getLatestDragDelta();
+      if (latest) moveDragBy(latest);
+      clearDragPreview();
+      dragStartClientRef.current = null;
+    }
+
     endDrag();
   }
 
@@ -61,9 +134,11 @@ export function Canvas() {
 
       const pointer = getPointerPositionWithin(viewport, e);
       useEditorStore.getState().selectAndStartDrag(nodeId, pointer, e.shiftKey);
+      dragStartClientRef.current = { x: e.clientX, y: e.clientY };
+      startDragPreview(viewport, useEditorStore.getState().ui.selectedIds);
       viewport.setPointerCapture(e.pointerId);
     },
-    [],
+    [startDragPreview],
   );
 
   const isNodeSelected = useCallback(
