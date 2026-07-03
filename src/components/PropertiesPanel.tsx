@@ -1,6 +1,6 @@
 import type { NodeRect } from "../types";
 import { useEditorStore } from "../store";
-import { useRenderCount } from "../useRenderCount";
+import { useRenderCount } from "../hooks/rendering/useRenderCount";
 import { useCallback, useEffect, useMemo } from "react";
 
 export function PropertiesPanel() {

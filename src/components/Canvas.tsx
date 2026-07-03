@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useEditorStore } from "../store";
-import { useRenderCount } from "../useRenderCount";
+import { useImperativeDragPreview } from "../hooks/rendering/useImperativeDragPreview";
+import { useRenderCount } from "../hooks/rendering/useRenderCount";
+import { intersectsViewport, useViewportBounds } from "../hooks/rendering/useViewportBounds";
 import { Shape } from "./Shape";
 import { MatrixOverlay } from "./MatrixOverlay";
 import { Coordinate } from "../types";
@@ -8,71 +10,6 @@ import { Coordinate } from "../types";
 function getPointerPositionWithin(el: HTMLElement, e: React.PointerEvent): Coordinate {
   const rect = el.getBoundingClientRect();
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-}
-
-function getNodeSelector(nodeId: string): string {
-  return `[data-node-id="${CSS.escape(nodeId)}"]`;
-}
-
-function useImperativeDragPreview() {
-  const selectedElementsRef = useRef<HTMLElement[]>([]);
-  const dragDeltaRef = useRef<Coordinate>();
-  const frameRef = useRef<number | null>(null);
-
-  const clearDragPreview = useCallback((): void => {
-    if (frameRef.current !== null) {
-      cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
-
-    for (const el of selectedElementsRef.current) {
-      el.style.transform = "";
-      el.style.willChange = "";
-    }
-
-    selectedElementsRef.current = [];
-    dragDeltaRef.current = undefined;
-  }, []);
-
-  const startDragPreview = useCallback(
-    (viewport: HTMLElement, nodeIds: string[]): void => {
-      clearDragPreview();
-      selectedElementsRef.current = nodeIds
-        .map((id) => viewport.querySelector<HTMLElement>(getNodeSelector(id)))
-        .filter((el): el is HTMLElement => el !== null);
-    },
-    [clearDragPreview],
-  );
-
-  const scheduleDragPreview = useCallback((delta: Coordinate): void => {
-    dragDeltaRef.current = delta;
-
-    if (frameRef.current !== null) return;
-
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = null;
-      const latest = dragDeltaRef.current;
-      if (!latest) return;
-
-      for (const el of selectedElementsRef.current) {
-        el.style.transform = `translate(${latest.x}px, ${latest.y}px)`;
-        el.style.willChange = "transform";
-      }
-    });
-  }, []);
-
-  const getLatestDragDelta = useCallback((): Coordinate | undefined => {
-    return dragDeltaRef.current;
-  }, []);
-
-  useEffect(() => clearDragPreview, [clearDragPreview]);
-
-  return {
-    clearDragPreview,
-    getLatestDragDelta,
-    scheduleDragPreview,
-    startDragPreview,
-  };
 }
 
 export function Canvas() {
@@ -90,9 +27,22 @@ export function Canvas() {
   useRenderCount("Canvas", isRenderLoggingEnabled);
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const viewportBounds = useViewportBounds(viewportRef);
   const dragStartClientRef = useRef<Coordinate | null>(null);
   const { clearDragPreview, getLatestDragDelta, scheduleDragPreview, startDragPreview } =
     useImperativeDragPreview();
+
+  const visibleNodeIds = useMemo(() => {
+    if (!viewportBounds) return nodeIds;
+
+    const nodeById = useEditorStore.getState().doc.nodeById;
+    return nodeIds.filter((id) => {
+      if (selectedSet.has(id)) return true;
+
+      const node = nodeById[id];
+      return node ? intersectsViewport(node, viewportBounds) : false;
+    });
+  }, [isDragging, nodeIds, selectedSet, viewportBounds]);
 
   function handlePointerDownOnCanvas(e: React.PointerEvent<HTMLDivElement>): void {
     if (e.target === e.currentTarget) {
@@ -159,7 +109,7 @@ export function Canvas() {
         onPointerLeave={handlePointerUp}
       >
         <div className="canvas-page">
-          {nodeIds.map((id) => (
+          {visibleNodeIds.map((id) => (
             <Shape
               key={id}
               nodeId={id}

@@ -1,5 +1,5 @@
 import { useEditorStore } from "../store";
-import { useRenderCount } from "../useRenderCount";
+import { useRenderCount } from "../hooks/rendering/useRenderCount";
 import React from "react";
 
 export interface ShapeProps {

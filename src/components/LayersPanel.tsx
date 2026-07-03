@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useEditorStore } from "../store";
-import { useRenderCount } from "../useRenderCount";
+import { useRenderCount } from "../hooks/rendering/useRenderCount";
 
 export function LayersPanel() {
   const isRenderLoggingEnabled = useEditorStore((state) => state.ui.isRenderLoggingEnabled);
