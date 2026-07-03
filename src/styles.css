@@ -114,12 +114,26 @@ html, body, #root {
   font: inherit;
 }
 
+.layers__virtual-list {
+  position: relative;
+  width: 100%;
+}
+
 .layer-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   padding: 4px 12px;
   cursor: pointer;
   font-size: 12px;
+}
+
+.layer-row--virtual {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
 }
 
 .layer-row:hover {
