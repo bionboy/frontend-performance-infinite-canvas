@@ -5,10 +5,18 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 export function randomColor(seed: number): string {
-  const r = (seed * 97) % 255;
-  const g = (seed * 57) % 255;
-  const b = (seed * 17) % 255;
-  return `rgb(${r}, ${g}, ${b})`;
+  const palette = [
+    "#f7a13d",
+    "#f05f42",
+    "#e9d96b",
+    "#78c1a3",
+    "#83a8d9",
+    "#ef8fb1",
+    "#c9b98f",
+    "#f3ede1",
+  ];
+
+  return palette[seed % palette.length];
 }
 
 export function createNodes(count: number): NodeRect[] {
