@@ -16,3 +16,5 @@ This repo is a performance exercise: the core constraint is keeping canvas drag 
 - `pnpm install`
 - `pnpm dev`
 - `pnpm build`
+
+<img width="964" height="819" alt="image" src="https://github.com/user-attachments/assets/b1fe21c9-2449-49e3-8bd2-75769f4cc287" />
